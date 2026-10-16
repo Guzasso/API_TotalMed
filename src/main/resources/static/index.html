@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TotalMed - Teste Geral</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: sans-serif; max-width: 900px; margin: 40px auto; padding: 0 16px; background: #f9f9f9; }
+        h1 { color: #2c3e50; }
+        h3 { margin: 12px 0 4px; color: #2c3e50; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
+        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+        input, select, textarea { padding: 8px; margin: 4px 0; border: 1px solid #ccc; border-radius: 4px; width: 100%; font-family: inherit; }
+        label { font-size: 13px; color: #555; display: block; margin-top: 6px; }
+        button { padding: 8px 14px; margin: 4px 4px 4px 0; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
+        .btn-criar { background: #27ae60; }
+        .btn-listar { background: #2952b9; }
+        .btn-buscar { background: #8e44ad; }
+        .btn-redefinir { background: #e622cc; }
+        .btn-atualizar { background: #e69822; }
+        .btn-deletar { background: #e74c3c; }
+        .btn-neutro { background: #7f8c8d; }
+        .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 16px; }
+        .tabs button { background: #dfe6e9; color: #2c3e50; margin: 0; }
+        .tabs button.ativa { background: #2c3e50; color: white; }
+        .secao { display: none; }
+        .secao.ativa { display: block; }
+        .dica { font-size: 12px; color: #777; margin: 4px 0 8px; }
+        .status-ok { color: #27ae60; font-weight: bold; }
+        .status-erro { color: #e74c3c; font-weight: bold; }
+        pre { background: #2c3e50; color: #ecf0f1; padding: 16px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; max-height: 500px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+<h1>TotalMed - Teste Geral da API</h1>
+<p class="dica">Pré-agendamento (ficha digital): paciente cria ficha → recepção aceita/recusa → código validado na chegada → fila.</p>
+
+<div class="tabs" id="tabs">
+    <button data-tab="login" class="ativa">🔐 Login</button>
+    <button data-tab="pacientes">🧑 Pacientes</button>
+    <button data-tab="admin">🛡️ Admin</button>
+    <button data-tab="clinicas">🏥 Clínicas</button>
+    <button data-tab="fichas">📝 Fichas</button>
+    <button data-tab="fila">⏳ Fila</button>
+</div>
+
+<!-- ===================== LOGIN ===================== -->
+<div class="card secao ativa" id="sec-login">
+    <h3>POST /login</h3>
+    <div class="grid">
+        <div><label>Email</label><input id="loginEmail" type="email" placeholder="joao@email.com"></div>
+        <div><label>Senha</label><input id="loginPassword" type="password" placeholder="senha123"></div>
+    </div>
+    <button class="btn-criar" onclick="login()">Entrar</button>
+    <p class="dica">Retorna { id, nome, role }. Não há token: o id retornado é usado manualmente nas outras abas.</p>
+</div>
+
+<!-- ===================== PACIENTES ===================== -->
+<div class="card secao" id="sec-pacientes">
+    <label>ID do paciente (buscar, atualizar, redefinir e deletar)</label>
+    <input id="pId" type="number" placeholder="Ex: 1">
+
+    <h3>Dados do paciente</h3>
+    <div class="grid">
+        <div><label>Nome</label><input id="pNome" placeholder="João Silva"></div>
+        <div><label>Email</label><input id="pEmail" type="email" placeholder="joao@email.com"></div>
+        <div><label>Senha</label><input id="pPassword" type="text" placeholder="senha123"></div>
+        <div><label>CPF</label><input id="pCpf" placeholder="12345678900"></div>
+        <div><label>RG</label><input id="pRg" placeholder="123456789"></div>
+        <div><label>Telefone</label><input id="pTell" placeholder="11999999999"></div>
+        <div><label>Data de nascimento</label><input id="pDataNascimento" type="date"></div>
+        <div>
+            <label>Sexo</label>
+            <select id="pSexo">
+                <option value="MASCULINO">MASCULINO</option>
+                <option value="FEMININO">FEMININO</option>
+                <option value="OUTRO">OUTRO</option>
+            </select>
+        </div>
+        <div><label>Altura (m) — 0.1 a 3.0</label><input id="pAltura" type="number" step="0.01" placeholder="1.75"></div>
+        <div><label>Peso (kg) — 0.1 a 500</label><input id="pPeso" type="number" step="0.1" placeholder="70"></div>
+        <div><label>Convênio (opcional)</label><input id="pConvenio" placeholder="Unimed"></div>
+        <div><label>Histórico médico (opcional)</label><input id="pHistorico" placeholder="Hipertensão"></div>
+    </div>
+
+    <h3>Endereço</h3>
+    <div class="grid">
+        <div><label>Logradouro</label><input id="pLogradouro" placeholder="Rua das Flores"></div>
+        <div><label>Número</label><input id="pNumero" placeholder="100"></div>
+        <div><label>Complemento</label><input id="pComplemento" placeholder="Apto 12"></div>
+        <div><label>Bairro</label><input id="pBairro" placeholder="Centro"></div>
+        <div><label>CEP</label><input id="pCep" placeholder="01001000"></div>
+        <div><label>Cidade</label><input id="pCidade" placeholder="São Paulo"></div>
+        <div><label>UF</label><input id="pUf" placeholder="SP" maxlength="2"></div>
+        <div><label>Estado</label><input id="pEstado" placeholder="São Paulo"></div>
+    </div>
+
+    <h3>Buscas</h3>
+    <div class="grid">
+        <div><label>CPF</label><input id="pBuscaCpf" placeholder="12345678900"></div>
+        <div><label>Nome (busca parcial)</label><input id="pBuscaNome" placeholder="João"></div>
+    </div>
+
+    <div style="margin-top:12px">
+        <button class="btn-criar" onclick="pacienteCriar()">➕ Criar (POST)</button>
+        <button class="btn-listar" onclick="chamar('GET','/pacientes')">📋 Listar todos</button>
+        <button class="btn-buscar" onclick="pacienteBuscarId()">🔎 Buscar por ID</button>
+        <button class="btn-buscar" onclick="pacienteBuscarCpf()">🔎 Por CPF</button>
+        <button class="btn-buscar" onclick="pacienteBuscarNome()">🔎 Por nome</button>
+        <button class="btn-atualizar" onclick="pacienteAtualizar()">✏️ Atualizar parcial (PATCH)</button>
+        <button class="btn-redefinir" onclick="pacienteRedefinir()">🔁 Redefinir completo (PUT)</button>
+        <button class="btn-deletar" onclick="pacienteDeletar()">🗑️ Deletar</button>
+    </div>
+    <p class="dica">PUT/POST exigem todos os campos obrigatórios. PATCH só envia o que estiver preenchido. Deletar apaga DEFINITIVAMENTE o paciente, as fichas dele e as entradas dele na fila.</p>
+</div>
+
+<!-- ===================== ADMIN ===================== -->
+<div class="card secao" id="sec-admin">
+    <label>ID do admin (buscar, atualizar, redefinir e deletar)</label>
+    <input id="aId" type="number" placeholder="Ex: 1">
+
+    <h3>Dados do admin</h3>
+    <div class="grid">
+        <div><label>Nome</label><input id="aNome" placeholder="Maria Recepção"></div>
+        <div><label>Email</label><input id="aEmail" type="email" placeholder="maria@totalmed.com"></div>
+        <div><label>Senha</label><input id="aPassword" type="text" placeholder="admin123"></div>
+        <div><label>CPF</label><input id="aCpf" placeholder="98765432100"></div>
+        <div><label>RG</label><input id="aRg" placeholder="987654321"></div>
+        <div><label>Telefone</label><input id="aTell" placeholder="11988888888"></div>
+        <div><label>Data de nascimento</label><input id="aDataNascimento" type="date"></div>
+    </div>
+
+    <div style="margin-top:12px">
+        <button class="btn-criar" onclick="adminCriar()">➕ Criar (POST)</button>
+        <button class="btn-listar" onclick="chamar('GET','/admin')">📋 Listar admins</button>
+        <button class="btn-buscar" onclick="adminBuscarId()">🔎 Buscar por ID</button>
+        <button class="btn-atualizar" onclick="adminAtualizar()">✏️ Atualizar parcial (PATCH)</button>
+        <button class="btn-redefinir" onclick="adminRedefinir()">🔁 Redefinir completo (PUT)</button>
+        <button class="btn-deletar" onclick="adminDeletar()">🗑️ Deletar</button>
+    </div>
+    <div>
+        <button class="btn-neutro" onclick="chamar('GET','/admin/pacientes')">🧑 Listar pacientes (/admin/pacientes)</button>
+        <button class="btn-neutro" onclick="chamar('GET','/admin/relatorio')">📊 Relatório (/admin/relatorio)</button>
+    </div>
+    <p class="dica">Deletar apaga o admin definitivamente. Não é possível apagar o último admin (422).</p>
+</div>
+
+<!-- ===================== CLINICAS ===================== -->
+<div class="card secao" id="sec-clinicas">
+    <label>ID da clínica (buscar e deletar)</label>
+    <input id="cId" type="number" placeholder="Ex: 1">
+
+    <h3>Nova clínica / unidade</h3>
+    <div class="grid">
+        <div><label>Nome</label><input id="cNome" placeholder="UBS Centro"></div>
+        <div><label>Telefone</label><input id="cTelefone" placeholder="1133334444"></div>
+    </div>
+    <h3>Endereço</h3>
+    <div class="grid">
+        <div><label>Logradouro</label><input id="cLogradouro" placeholder="Av. Paulista"></div>
+        <div><label>Número</label><input id="cNumero" placeholder="1000"></div>
+        <div><label>Complemento</label><input id="cComplemento"></div>
+        <div><label>Bairro</label><input id="cBairro" placeholder="Bela Vista"></div>
+        <div><label>CEP</label><input id="cCep" placeholder="01310100"></div>
+        <div><label>Cidade</label><input id="cCidade" placeholder="São Paulo"></div>
+        <div><label>UF</label><input id="cUf" placeholder="SP" maxlength="2"></div>
+        <div><label>Estado</label><input id="cEstado" placeholder="São Paulo"></div>
+    </div>
+
+    <div style="margin-top:12px">
+        <button class="btn-criar" onclick="clinicaCriar()">➕ Criar (POST)</button>
+        <button class="btn-listar" onclick="chamar('GET','/clinicas')">📋 Listar todas</button>
+        <button class="btn-buscar" onclick="clinicaBuscarId()">🔎 Buscar por ID</button>
+        <button class="btn-deletar" onclick="clinicaDeletar()">🗑️ Deletar</button>
+    </div>
+    <p class="dica">A clínica nasce com ativa=true. Fichas só podem ser criadas para unidades ativas. Deletar apaga DEFINITIVAMENTE a clínica, as fichas dela e as entradas na fila dessas fichas (os pacientes continuam).</p>
+</div>
+
+<!-- ===================== FICHAS ===================== -->
+<div class="card secao" id="sec-fichas">
+    <h3>Paciente — criar ficha (POST /fichas/pacientes/{id})</h3>
+    <div class="grid">
+        <div><label>ID do paciente</label><input id="fPacienteId" type="number" placeholder="Ex: 1"></div>
+        <div><label>ID da unidade (clínica)</label><input id="fUnidadeId" type="number" placeholder="Ex: 1"></div>
+        <div><label>Data/hora preferencial (hoje ou futuro)</label><input id="fDataPreferencial" type="datetime-local"></div>
+        <div>
+            <label>Tipo da ficha</label>
+            <select id="fTipo">
+                <option value="NORMAL">NORMAL</option>
+                <option value="PREFERENCIAL">PREFERENCIAL</option>
+                <option value="SUPERPREFERENCIAL">SUPERPREFERENCIAL</option>
+            </select>
+        </div>
+        <div>
+            <label>Motivo</label>
+            <select id="fMotivoEnum">
+                <option value="">(não informar)</option>
+                <option value="SEM_MOTIVO">SEM_MOTIVO (não pode ter descrição)</option>
+                <option value="COM_MOTIVO">COM_MOTIVO (exige descrição)</option>
+            </select>
+        </div>
+        <div><label>Descrição do motivo</label><input id="fMotivoString" placeholder="Dor de cabeça há 3 dias"></div>
+    </div>
+    <button class="btn-criar" onclick="fichaCriar()">➕ Criar ficha</button>
+    <button class="btn-listar" onclick="fichaListarPaciente()">📋 Fichas do paciente</button>
+
+    <h3>Recepção (admin)</h3>
+    <div class="grid">
+        <div><label>ID da ficha</label><input id="fId" type="number" placeholder="Ex: 1"></div>
+        <div><label>Filtrar por status</label>
+            <select id="fStatus">
+                <option value="">(todos)</option>
+                <option>PENDENTE</option><option>ACEITO</option><option>RECUSADO</option>
+                <option>VALIDADO</option><option>CANCELADO</option><option>EXPIRADO</option>
+            </select>
+        </div>
+        <div style="grid-column: 1 / -1"><label>Justificativa (obrigatória para recusar)</label><input id="fJustificativa" placeholder="Unidade sem vagas nesta data"></div>
+    </div>
+    <button class="btn-listar" onclick="fichaListar()">📋 Listar (com filtro)</button>
+    <button class="btn-buscar" onclick="fichaBuscar()">🔎 Buscar por ID</button>
+    <button class="btn-criar" onclick="fichaAceitar()">✅ Aceitar</button>
+    <button class="btn-deletar" onclick="fichaRecusar()">⛔ Recusar</button>
+    <button class="btn-atualizar" onclick="fichaCancelar()">🚫 Cancelar</button>
+    <button class="btn-neutro" onclick="chamar('PUT','/fichas/expirar')">⌛ Expirar vencidas</button>
+
+    <h3>Chegada do paciente</h3>
+    <div class="grid">
+        <div><label>Código da ficha (8 caracteres, gerado no aceite)</label><input id="fCodigo" placeholder="AB12CD34"></div>
+    </div>
+    <button class="btn-redefinir" onclick="fichaValidar()">🎫 Validar código (entra na fila)</button>
+</div>
+
+<!-- ===================== FILA ===================== -->
+<div class="card secao" id="sec-fila">
+    <h3>Fila de atendimento</h3>
+    <label>ID da entrada na fila</label>
+    <input id="filaId" type="number" placeholder="Ex: 1">
+    <button class="btn-listar" onclick="chamar('GET','/fila')">📋 Listar fila (não atendidos)</button>
+    <button class="btn-criar" onclick="filaAtendido()">✅ Marcar como atendido</button>
+    <p class="dica">Quem entra na fila é feito em Fichas → Validar código.</p>
+</div>
+
+<div class="card">
+    <strong>Resposta da API:</strong>
+    <div id="status" class="dica">Nenhuma requisição feita ainda.</div>
+    <pre id="resposta">-</pre>
+</div>
+
+<script>
+    const BASE = '';
+    const $ = id => document.getElementById(id);
+    const val = id => $(id).value.trim();
+
+    // ---------- Abas ----------
+    document.querySelectorAll('#tabs button').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('ativa'));
+            document.querySelectorAll('.secao').forEach(s => s.classList.remove('ativa'));
+            btn.classList.add('ativa');
+            $('sec-' + btn.dataset.tab).classList.add('ativa');
+        };
+    });
+
+    // ---------- Requisição genérica ----------
+    async function chamar(metodo, url, body) {
+        const opts = { method: metodo, headers: {} };
+        if (body !== undefined) {
+            opts.headers['Content-Type'] = 'application/json';
+            opts.body = JSON.stringify(body);
+        }
+        const st = $('status');
+        const pre = $('resposta');
+        st.className = 'dica';
+        st.textContent = `${metodo} ${url} ...`;
+        try {
+            const r = await fetch(BASE + url, opts);
+            const texto = await r.text();
+            let corpo = texto;
+            try { corpo = JSON.stringify(JSON.parse(texto), null, 2); } catch (e) { /* texto puro */ }
+            st.className = r.ok ? 'status-ok' : 'status-erro';
+            st.textContent = `${metodo} ${url} → ${r.status} ${r.statusText}`;
+            pre.textContent = corpo || (r.ok ? '(sem conteúdo)' : '(erro sem corpo)');
+        } catch (e) {
+            st.className = 'status-erro';
+            st.textContent = `${metodo} ${url} → falha de rede`;
+            pre.textContent = String(e);
+        }
+    }
+
+    // Exclusao e definitiva: pede confirmacao antes de enviar o DELETE
+    function confirmarExclusao(oque, id) {
+        return confirm(`Excluir ${oque} ${id} DEFINITIVAMENTE? Essa ação não pode ser desfeita.`);
+    }
+
+    function exigirId(id, nome = 'ID') {
+        const v = val(id);
+        if (!v) { alert('Preencha o ' + nome); return null; }
+        return v;
+    }
+
+    function montarEndereco(p) {
+        return {
+            logradouro: val(p + 'Logradouro'), numero: val(p + 'Numero'),
+            complemento: val(p + 'Complemento'), bairro: val(p + 'Bairro'),
+            cep: val(p + 'Cep'), cidade: val(p + 'Cidade'),
+            uf: val(p + 'Uf'), estado: val(p + 'Estado')
+        };
+    }
+
+    // ---------- Login ----------
+    function login() {
+        chamar('POST', '/login', { email: val('loginEmail'), password: $('loginPassword').value });
+    }
+
+    // ---------- Pacientes ----------
+    function pacienteBodyCompleto() {
+        return {
+            nome: val('pNome'), email: val('pEmail'), password: val('pPassword'),
+            cpf: val('pCpf'), rg: val('pRg'), tell: val('pTell'),
+            convenio: val('pConvenio') || null,
+            historicoMedico: val('pHistorico') || null,
+            altura: val('pAltura') === '' ? null : Number(val('pAltura')),
+            peso: val('pPeso') === '' ? null : Number(val('pPeso')),
+            dataNascimento: val('pDataNascimento') || null,
+            sexo: val('pSexo'),
+            endereco: montarEndereco('p')
+        };
+    }
+    function pacienteBodyParcial() {
+        const b = {};
+        const campos = { nome: 'pNome', email: 'pEmail', password: 'pPassword', tell: 'pTell',
+            convenio: 'pConvenio', historicoMedico: 'pHistorico' };
+        for (const [k, id] of Object.entries(campos)) if (val(id)) b[k] = val(id);
+        if (val('pAltura')) b.altura = Number(val('pAltura'));
+        if (val('pPeso')) b.peso = Number(val('pPeso'));
+        const e = montarEndereco('p');
+        if (Object.values(e).some(v => v)) b.endereco = e;
+        return b;
+    }
+    function pacienteCriar() { chamar('POST', '/pacientes', pacienteBodyCompleto()); }
+    function pacienteBuscarId() { const id = exigirId('pId'); if (id) chamar('GET', `/pacientes/${id}`); }
+    function pacienteBuscarCpf() { const c = exigirId('pBuscaCpf', 'CPF'); if (c) chamar('GET', `/pacientes/cpf/${encodeURIComponent(c)}`); }
+    function pacienteBuscarNome() { const n = exigirId('pBuscaNome', 'nome'); if (n) chamar('GET', `/pacientes/nome/${encodeURIComponent(n)}`); }
+    function pacienteRedefinir() { const id = exigirId('pId'); if (id) chamar('PUT', `/pacientes/${id}`, pacienteBodyCompleto()); }
+    function pacienteAtualizar() { const id = exigirId('pId'); if (id) chamar('PATCH', `/pacientes/${id}`, pacienteBodyParcial()); }
+    function pacienteDeletar() { const id = exigirId('pId'); if (id && confirmarExclusao('o paciente', id)) chamar('DELETE', `/pacientes/${id}`); }
+
+    // ---------- Admin ----------
+    function adminBodyCompleto() {
+        return {
+            nome: val('aNome'), email: val('aEmail'), password: val('aPassword'),
+            cpf: val('aCpf'), rg: val('aRg'), tell: val('aTell'),
+            dataNascimento: val('aDataNascimento') || null
+        };
+    }
+    function adminBodyParcial() {
+        const b = {};
+        const campos = { nome: 'aNome', email: 'aEmail', password: 'aPassword', tell: 'aTell' };
+        for (const [k, id] of Object.entries(campos)) if (val(id)) b[k] = val(id);
+        return b;
+    }
+    function adminCriar() { chamar('POST', '/admin', adminBodyCompleto()); }
+    function adminBuscarId() { const id = exigirId('aId'); if (id) chamar('GET', `/admin/${id}`); }
+    function adminRedefinir() { const id = exigirId('aId'); if (id) chamar('PUT', `/admin/${id}`, adminBodyCompleto()); }
+    function adminAtualizar() { const id = exigirId('aId'); if (id) chamar('PATCH', `/admin/${id}`, adminBodyParcial()); }
+    function adminDeletar() { const id = exigirId('aId'); if (id && confirmarExclusao('o admin', id)) chamar('DELETE', `/admin/${id}`); }
+
+    // ---------- Clínicas ----------
+    function clinicaCriar() {
+        chamar('POST', '/clinicas', {
+            nome: val('cNome'), telefone: val('cTelefone'), endereco: montarEndereco('c')
+        });
+    }
+    function clinicaBuscarId() { const id = exigirId('cId'); if (id) chamar('GET', `/clinicas/${id}`); }
+    function clinicaDeletar() { const id = exigirId('cId'); if (id && confirmarExclusao('a clínica', id)) chamar('DELETE', `/clinicas/${id}`); }
+
+    // ---------- Fichas ----------
+    function fichaCriar() {
+        const pid = exigirId('fPacienteId', 'ID do paciente');
+        if (!pid) return;
+        const body = {
+            unidadeId: val('fUnidadeId') === '' ? null : Number(val('fUnidadeId')),
+            dataPreferencial: val('fDataPreferencial') ? val('fDataPreferencial') + ':00' : null,
+            tipoFichaAtendimento: val('fTipo')
+        };
+        if (val('fMotivoEnum')) body.motivoEnum = val('fMotivoEnum');
+        if (val('fMotivoString')) body.motivoString = val('fMotivoString');
+        chamar('POST', `/fichas/pacientes/${pid}`, body);
+    }
+    function fichaListarPaciente() { const pid = exigirId('fPacienteId', 'ID do paciente'); if (pid) chamar('GET', `/fichas/pacientes/${pid}`); }
+    function fichaListar() { const s = val('fStatus'); chamar('GET', '/fichas' + (s ? `?status=${s}` : '')); }
+    function fichaBuscar() { const id = exigirId('fId', 'ID da ficha'); if (id) chamar('GET', `/fichas/${id}`); }
+    function fichaAceitar() { const id = exigirId('fId', 'ID da ficha'); if (id) chamar('PUT', `/fichas/${id}/aceitar`); }
+    function fichaRecusar() {
+        const id = exigirId('fId', 'ID da ficha'); if (!id) return;
+        chamar('PUT', `/fichas/${id}/recusar`, { justificativa: val('fJustificativa') });
+    }
+    function fichaCancelar() { const id = exigirId('fId', 'ID da ficha'); if (id) chamar('PUT', `/fichas/${id}/cancelar`); }
+    function fichaValidar() {
+        const c = exigirId('fCodigo', 'código');
+        if (c) chamar('POST', `/fichas/validar/${encodeURIComponent(c)}`);
+    }
+
+    // ---------- Fila ----------
+    function filaAtendido() { const id = exigirId('filaId', 'ID da fila'); if (id) chamar('PUT', `/fila/${id}/atendido`); }
+</script>
+</body>
+</html>
